@@ -6,4 +6,4 @@ const CategorySchema = mongoose.Schema({
     color:{type:"string",required:true}
 })
 
-exports.Category = mongoose.model('category' , CategorySchema);
+exports.Category = mongoose.model('Category', CategorySchema);

@@ -29,6 +29,45 @@ router.get('/:id' , async (req, res) => {
     }
     return res.status(200).send(category);
 })
+router.put('/:id' , async (req, res) => {
+    const pLimit = await import('p-limit').then(module => module.default);
+    const limit = pLimit(2);
+
+        // Upload images to Cloudinary
+        const imagesToUpload = req.body.image.map((image) => {
+            return limit(async () => {
+                const result = await cloudinary.uploader.upload(image);
+                return result;
+            });
+        });
+        const UploadStatus = await Promise.all(imagesToUpload);
+
+        const imgurl = UploadStatus.map((item) => {
+            return item.secure_url;
+        });
+        if(!UploadStatus){
+            return res.status(500).json({
+                message:"update status is false",
+                success:false
+            })
+        }
+        const category = await Category.findByIdAndUpdate(
+            req.params.id,
+            {
+            name: req.body.name,
+            image: imgurl,
+            color: req.body.color
+        },
+        {new:true}
+    );
+    if(!category){
+        return res.status(404).json({
+            message:"category is not updated",
+            success:false
+        });
+    }
+    res.send(category);
+})
 
 router.post('/create' , async (req, res) => {
     // const limit = pLimit(2);
@@ -56,12 +95,23 @@ router.post('/create' , async (req, res) => {
         const imgurl = UploadStatus.map((item) => {
             return item.secure_url;
         });
-
+        if(!UploadStatus){
+            return res.status(500).json({
+                message:"update status is false",
+                success:false
+            })
+        }
         let category = new Category({
             name: req.body.name,
             image: imgurl,
             color: req.body.color
         });
+        if(!category){
+            return res.status(404).json({
+                message:"category is not uploaded",
+                success:false
+            });
+        }
 
         category = await category.save();
 
@@ -76,5 +126,16 @@ router.post('/create' , async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if(!category) {
+        res.status(400).json({
+            message:'Category not found'
+        })
+    }
+    res.status(200).json({
+        message:'category deleted sucessfully'
+    })
+})
 
 module.exports = router;

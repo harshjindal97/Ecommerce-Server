@@ -11,9 +11,11 @@ app.options('*', cors());
 app.use(bodyParser.json());
 
 const CategoryRoute = require('./routes/category')
+const ProductRoute = require('./routes/product');
 
 
 app.use('/api/category', CategoryRoute);
+app.use('/api/product',ProductRoute);
 
 
 mongoose.connect(process.env.CONNECTION_STRING)
