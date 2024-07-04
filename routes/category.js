@@ -12,12 +12,32 @@ cloudinary.config({
 
 
 router.get('/' , async (req, res) => {
-    const categoryList = await Category.find();
+
+    const page = parseInt(req.query.page) || 1;
+    const perPage = 4;
+    const totalCount = await Category.countDocuments();
+    const totalPages = Math.ceil(totalCount / perPage);
+
+    if(page>totalPages){
+        return res.status(404).json({
+            message:'page not found'
+        })
+    }
+
+    const categoryList = await Category.find()
+        .skip((page-1)*perPage).limit(perPage).exec();
+
+
     if(!categoryList){
         console.log({success:false})
         res.status(500).json({success:false});
     }
-    res.send(categoryList);
+    
+    return res.status(200).json({
+        "categoryList":categoryList,
+        "page":page,
+        "totalPages":totalPages
+    })
 })
 
 router.get('/:id' , async (req, res) => {
